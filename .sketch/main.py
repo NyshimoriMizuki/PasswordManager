@@ -1,33 +1,63 @@
-from random import randrange
+from random import choices
+from typing import Tuple, List
+
+NUMBERS = "1234567890"
+CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz "
+SPECIALS = "!@#$%¨&*()-_=+[]~^{};,.<>:/?\\|"
 
 
-# create password
-def new_password() -> str:
-    """ creates a password like: 00-aa0aaa_000aa, 70-uW8vdBR_462NU, ..."""
-    # NLLNLLLL_NN
-    password_head = f'{_new_number(2)}-'
-    body = f'{_new_letter(2)}{_new_number()}{_new_letter(4)}'
-    tail = f'_{_new_number(3)}{_new_letter(2).upper()}'
-    return password_head+body+tail
+class Account:
+    def __init__(self, user: str, email: str, password: str, service: str | None = None) -> None:
+        self.service = service
+        self.user = user
+        self.email = email
+        self.password = password
+
+    def __eq__(self, __o: object) -> bool:
+        if __o.email == self.email and __o.password == self.password:
+            return True
+        return False
+
+    def get_service(self):
+        return self.service
+
+    def no_service(self):
+        return False if self.service else True
+
+    def get_account(self):
+        return f"\n{self.user}'s email: {self.email}\n{self.user}'s password: {self.password}"
 
 
-def _new_number(digits=1) -> str:
-    number = str(randrange(0, 9))
-    if digits == 1:
-        return number
-    return number + _new_number(digits-1)
+class PWManager:
+    def __init__(self, master_login: Account):
+        self.master_login = master_login
+        self.__accounts: List[Account] = []
+
+    def add_account(self, master_login, new_account: Account):
+        if master_login == self.master_login:
+            if new_account.no_service():
+                raise Exception("No service found")
+            self.__accounts.append(new_account)
+
+    def get_account(self, master_login, account_service):
+        if master_login == self.master_login:
+            for _account in self.__accounts:
+                if _account.get_service() == account_service:
+                    return _account.get_account()
+                raise Exception('Account not found')
+
+    @staticmethod
+    def pw_generator(length=12, password_number=1):
+        def new_pass(): return "".join(choices(NUMBERS+CHARS+SPECIALS, k=length))
+
+        if password_number > 1:
+            passwords = []
+            for _ in range(password_number):
+                passwords.append(new_pass())
+            return passwords
+        return "".join(choices(NUMBERS+CHARS+SPECIALS, k=length))
 
 
-def _new_letter(digits=1) -> str:
-    illegal_range = [i for i in range(91, 97)]
-    letter = chr(new if not (new := randrange(65, 122)) in illegal_range
-                 else randrange(97, 122))
-    if digits == 1:
-        return letter
-    return letter + _new_letter(digits-1)
-
-
-# validate password
 class LoginSystem:
     def __init__(self):
         self.accounts = dict()
@@ -45,17 +75,23 @@ class LoginSystem:
 
 
 if __name__ == "__main__":
+    master = Account("Master", "masterdev@gmail.com", "badpass")
+    manager = PWManager(master)
+    manager.add_account(master, Account(
+        "D'eu", "masterdev@gmail.com", "70-uW8vdBR_462NU", "Google"))
+    manager.add_account(master, Account(
+        "D'eu", "masterdev@gmail.com", "uQd8vfdR_NU", "Discord"))
+
+    print(manager.pw_generator())
+    print(manager.get_account(master, "Google"))
+
     registed_passwords = {
         "Banana": "banana",
         "Caramaneiro": "dK4Nls_13",
         "D'eu": "70-uW8vdBR_462NU"
     }
-
     system = LoginSystem()
     for user, password in registed_passwords.items():
         system.registe(user, password)
 
-    system.login("d'eu", "70-uW8vdBR_462NU")
-
-    # while True:
-    #     cmd = input(">")
+    system.login("D'eu", "70-uW8vdBR_462NU")
