@@ -1,2 +1,2 @@
 # PasswordManager
-this project is only to I study and use C++
+trying to make a password manager in rust
